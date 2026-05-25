@@ -1,0 +1,46 @@
+import streamlit as st
+import pandas as pd
+import datetime
+import os
+
+# --- AYARLAR ---
+CSV_FILE = "envanter.csv"
+
+# Veri yükleme
+def load_data():
+    if os.path.exists(CSV_FILE):
+        return pd.read_csv(CSV_FILE)
+    return pd.DataFrame(columns=["Tarih", "Kullanici", "Kalite", "Adet", "Kat", "Peron"])
+
+# Arayüz
+st.title("🍵 Depo Takip Sistemi")
+
+user = st.selectbox("Kullanıcı Seçin", ["Yakup Koçal", "Ahmet Kızılkaya", "Gökhan Durmuş", "Ahmet Yıldız", "Sefa Çepni", "İsmail Sarıhan", "Yönetici"])
+password = st.text_input("Şifre", type="password")
+
+if st.button("Giriş Yap"):
+    # Şifre kontrolü (Basit bir sözlük yapısı)
+    passwords = {"Yönetici": "admin", "Yakup Koçal": "1234"} # Burayı genişlet
+    if password == passwords.get(user, ""):
+        st.success(f"Hoş geldin {user}")
+        
+        # Sekmeler
+        tab1, tab2 = st.tabs(["Ürün Ekle", "Depoyu Gör"])
+        
+        with tab1:
+            kalite = st.number_input("Nevi", 1, 50)
+            adet = st.number_input("Adet", 1, 1000)
+            kat = st.selectbox("Kat", ["1. Kat", "2. Kat", "3. Kat", "Soldurma Üstü", "Fırınlar Üstü"])
+            peron = st.number_input("Peron No", 1, 20)
+            if st.button("Kaydet"):
+                df = load_data()
+                new_row = {"Tarih": datetime.date.today().strftime("%d-%m-%Y"), "Kullanici": user, "Kalite": kalite, "Adet": adet, "Kat": kat, "Peron": peron}
+                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+                df.to_csv(CSV_FILE, index=False)
+                st.write("Kaydedildi!")
+
+        with tab2:
+            df = load_data()
+            st.dataframe(df)
+    else:
+        st.error("Hatalı Şifre!")
